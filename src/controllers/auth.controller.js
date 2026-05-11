@@ -5,6 +5,7 @@ import {
   findUserById,
   createUser,
   updateUser,
+  deleteUserById,
   setUserAllergens,
   getUserAllergens,
   getAllAllergens,
@@ -13,7 +14,7 @@ import {
 } from '../models/user.model.js'
 import { syncAndLoadUserAllergens } from '../services/userAllergenPersistence.service.js'
 import { sendAuthCookie } from '../utils/jwt.js'
-import { ok, created, conflict, unauthorized, serverError } from '../utils/response.js'
+import { ok, created, conflict, unauthorized, notFound, serverError } from '../utils/response.js'
 
 const SALT_ROUNDS = 12
 
@@ -78,12 +79,13 @@ export async function login(req, res) {
     if (!match) return unauthorized(res, 'Credenciales incorrectas.')
 
     const fullUser = await findUserById(user.id)
+    const allergens = await getUserAllergens(user.id)
     const token = sendAuthCookie(res, fullUser)
 
     return ok(res, {
       message: 'Inicio de sesión correcto.',
       token,
-      user: sanitizeUser(fullUser),
+      user: { ...sanitizeUser(fullUser), allergens },
     })
   } catch (err) {
     console.error('[login]', err)
@@ -164,6 +166,26 @@ export async function actualizar(req, res) {
     })
   } catch (err) {
     console.error('[actualizar]', err)
+    return serverError(res)
+  }
+}
+
+export async function eliminarCuenta(req, res) {
+  try {
+    const userId = req.user.id
+    const deleted = await deleteUserById(userId)
+
+    if (!deleted) {
+      return notFound(res, 'No se encontro la cuenta que intentas eliminar.')
+    }
+
+    res.clearCookie('token')
+
+    return ok(res, {
+      message: 'Cuenta eliminada correctamente.',
+    })
+  } catch (err) {
+    console.error('[eliminarCuenta]', err)
     return serverError(res)
   }
 }

@@ -17,7 +17,12 @@ function normalizeRequestedAllergens(input) {
 
   return rawItems
     .map((item) => {
-      const trimmed = String(item ?? '').trim()
+      const rawValue =
+        item && typeof item === 'object'
+          ? item.id ?? item.value ?? item.name ?? item.label ?? ''
+          : item
+
+      const trimmed = String(rawValue ?? '').trim()
       if (!trimmed) {
         return null
       }

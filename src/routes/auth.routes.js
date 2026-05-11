@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
 import rateLimit from 'express-rate-limit'
-import { registro, login, logout, me, actualizar } from '../controllers/auth.controller.js'
+import { registro, login, logout, me, actualizar, eliminarCuenta } from '../controllers/auth.controller.js'
 import { requireAuth } from '../middlewares/auth.middleware.js'
 import { validate } from '../middlewares/validate.middleware.js'
 
@@ -202,5 +202,6 @@ router.post('/login',      loginLimiter,    loginRules,      validate, login)
 router.post('/logout',     requireAuth,     logout)
 router.get('/me',          requireAuth,     meLimiter, me)
 router.post('/actualizar', requireAuth, actualizarRules, validate, actualizar)
+router.delete('/cuenta',   requireAuth, eliminarCuenta)
 
 export default router

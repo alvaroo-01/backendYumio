@@ -1,4 +1,5 @@
 import pool from '../config/db.js'
+import { nameToSlug } from './catalog.model.js'
 
 export async function findUserByEmail(email) {
   const [rows] = await pool.query('SELECT * FROM users WHERE email = ? LIMIT 1', [email])
@@ -57,7 +58,7 @@ export async function getUserAllergens(userId) {
      WHERE ua.user_id = ?`,
     [userId],
   )
-  return rows
+  return rows.map((r) => ({ ...r, slug: nameToSlug(r.name) }))
 }
 
 export async function getAllAllergens() {
@@ -76,6 +77,11 @@ export async function updateUser(userId, { username, email, passwordHash, countr
 
   params.push(userId)
   await pool.query(`UPDATE users SET ${setClauses.join(', ')} WHERE id = ?`, params)
+}
+
+export async function deleteUserById(userId) {
+  const [result] = await pool.query('DELETE FROM users WHERE id = ? LIMIT 1', [userId])
+  return Number(result?.affectedRows ?? 0) > 0
 }
 
 export async function findUserByEmailExcluding(email, excludeUserId) {
