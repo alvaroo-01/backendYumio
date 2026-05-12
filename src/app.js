@@ -11,15 +11,30 @@ import recipeRoutes        from './routes/recipe.routes.js'
 import friendshipRoutes    from './routes/friendship.routes.js'
 import catalogRoutes       from './routes/catalog.routes.js'
 import shoppingListRoutes  from './routes/shoppingList.routes.js'
-import { uploadsDir }     from './config/multer.js'
-import { errorHandler } from './middlewares/error.middleware.js'
+import { uploadsDir }      from './config/multer.js'
+import { errorHandler }    from './middlewares/error.middleware.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 
+// ── Health check (ANTES de todo, para que Railway no lo bloquee) ──────────────
+app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }))
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
+// Acepta múltiples orígenes separados por coma en CLIENT_URL
+// Ej: CLIENT_URL=https://mifrontend.vercel.app,http://localhost:5173
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Permite peticiones sin origen (Postman, curl, health checks internos)
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    callback(new Error(`Origen no permitido por CORS: ${origin}`))
+  },
   credentials: true,
 }))
 
@@ -30,7 +45,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET))
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000,
   max: 200,
   message: { ok: false, message: 'Demasiadas solicitudes al modulo de autenticacion. Intentalo de nuevo en unos minutos.' },
   standardHeaders: true,
@@ -39,7 +54,7 @@ const authLimiter = rateLimit({
 })
 
 const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 min
+  windowMs: 60 * 1000,
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
@@ -57,9 +72,6 @@ app.use('/recipes',       recipeRoutes)
 app.use('/friends',       friendshipRoutes)
 app.use('/catalogs',      catalogRoutes)
 app.use('/shopping-list', shoppingListRoutes)
-
-// ── Health check ──────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }))
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ ok: false, message: 'Ruta no encontrada.' }))
