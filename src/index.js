@@ -20,3 +20,8 @@ async function bootstrap() {
 }
 
 bootstrap()
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM recibido')
+  process.exit(0)
+})
