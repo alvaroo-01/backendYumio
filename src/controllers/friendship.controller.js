@@ -2,6 +2,8 @@ import {
   sendFriendRequest,
   getFriendshipBetween,
   updateFriendshipStatus,
+  blockFriendship,
+  unblockFriendship,
   getFriends,
   getPendingRequests,
   getBlockedUsers,
@@ -108,11 +110,29 @@ export async function block(req, res) {
     if (!friendship) return notFound(res, 'Solicitud no encontrada.')
     const isInvolved = friendship.requester_user_id === req.user.id || friendship.addressee_user_id === req.user.id
     if (!isInvolved) return forbidden(res)
+    if (friendship.status === 'blocked') return badRequest(res, 'Esta relación ya está bloqueada.')
 
-    await updateFriendshipStatus(friendship.id, 'blocked')
+    await blockFriendship(friendship.id, req.user.id)
     return ok(res, { message: 'Usuario bloqueado.' })
   } catch (err) {
     console.error('[friends.block]', err)
+    return serverError(res)
+  }
+}
+
+// PATCH /friends/:friendshipId/unblock
+export async function unblock(req, res) {
+  try {
+    const friendship = await getFriendshipById(req.params.friendshipId)
+    if (!friendship) return notFound(res, 'Relación no encontrada.')
+    if (friendship.status !== 'blocked') return badRequest(res, 'Esta relación no está bloqueada.')
+
+    const success = await unblockFriendship(friendship.id, req.user.id)
+    if (!success) return forbidden(res, 'Solo quien bloqueó puede desbloquear.')
+
+    return ok(res, { message: 'Usuario desbloqueado.' })
+  } catch (err) {
+    console.error('[friends.unblock]', err)
     return serverError(res)
   }
 }

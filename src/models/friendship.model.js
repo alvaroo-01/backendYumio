@@ -23,6 +23,23 @@ export async function updateFriendshipStatus(id, status) {
   await pool.query('UPDATE user_friendships SET status = ? WHERE id = ?', [status, id])
 }
 
+export async function blockFriendship(id, blockerUserId) {
+  await pool.query(
+    'UPDATE user_friendships SET status = ?, blocked_by_user_id = ? WHERE id = ?',
+    ['blocked', blockerUserId, id],
+  )
+}
+
+export async function unblockFriendship(id, requestingUserId) {
+  const [result] = await pool.query(
+    `UPDATE user_friendships
+     SET status = 'pending', blocked_by_user_id = NULL
+     WHERE id = ? AND blocked_by_user_id = ?`,
+    [id, requestingUserId],
+  )
+  return result.affectedRows > 0
+}
+
 export async function getFriends(userId) {
   const [rows] = await pool.query(
     `SELECT
@@ -68,8 +85,9 @@ export async function getBlockedUsers(userId) {
                  END
      WHERE (uf.requester_user_id = ? OR uf.addressee_user_id = ?)
        AND uf.status = 'blocked'
+       AND uf.blocked_by_user_id = ?
      ORDER BY u.username ASC`,
-    [userId, userId, userId],
+    [userId, userId, userId, userId],
   )
 
   return rows
