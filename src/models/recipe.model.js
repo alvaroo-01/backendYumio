@@ -393,12 +393,26 @@ async function resolveAllergenId(conn, slug) {
   return byName[0]?.id ?? null
 }
 
+// Valores válidos del ENUM unit en la BD
+const VALID_UNITS = new Set([
+  'kg', 'g', 'mg', 'l', 'ml', 'taza', 'cucharada',
+  'cucharadita', 'vaso', 'pieza', 'unidad', 'pizca', 'al_gusto',
+])
+
+function normalizeUnit(value) {
+  const unit = String(value ?? '').trim()
+  return VALID_UNITS.has(unit) ? unit : null
+}
+
 async function saveIngredients(conn, recipeId, ingredients) {
   if (!Array.isArray(ingredients) || ingredients.length === 0) return
   const values = ingredients
     .map((ing, i) => {
       const text = String(ing?.ingredient_text ?? ing?.ingredient ?? '').trim()
-      return text ? [recipeId, text, ing.quantity ?? null, ing.unit ?? null, i] : null
+      if (!text) return null
+      const quantity = ing.quantity !== '' && ing.quantity != null ? ing.quantity : null
+      const unit = normalizeUnit(ing.unit)
+      return [recipeId, text, quantity, unit, i]
     })
     .filter(Boolean)
   if (values.length === 0) return
@@ -498,4 +512,3 @@ function getDietTypeLabel(row) {
 
   return 'Omnívora'
 }
-
