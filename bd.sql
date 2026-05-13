@@ -1,5 +1,5 @@
 -- SQL completo (MySQL/InnoDB) 
-USE railway;
+
 
 DROP DATABASE IF EXISTS `recetario`;
 
@@ -675,24 +675,3 @@ JOIN recipe_allergens ra
   ON ra.allergen_id = ua.allergen_id
 JOIN allergens a
   ON a.id = ua.allergen_id;
-
-ALTER TABLE dish_types ADD COLUMN slug VARCHAR(60) NULL;
-
-UPDATE dish_types SET slug = 'entrantes_y_aperitivos' WHERE id = 1;
-UPDATE dish_types SET slug = 'ensaladas' WHERE id = 2;
-UPDATE dish_types SET slug = 'sopas_y_cremas' WHERE id = 3;
-UPDATE dish_types SET slug = 'guisos' WHERE id = 4;
-UPDATE dish_types SET slug = 'estofados' WHERE id = 5;
-UPDATE dish_types SET slug = 'arroces' WHERE id = 6;
-UPDATE dish_types SET slug = 'pastas' WHERE id = 7;
-UPDATE dish_types SET slug = 'legumbres' WHERE id = 8;
-UPDATE dish_types SET slug = 'carnes' WHERE id = 9;
-UPDATE dish_types SET slug = 'pescados_y_mariscos' WHERE id = 10;
-UPDATE dish_types SET slug = 'verduras_y_salteados' WHERE id = 11;
-UPDATE dish_types SET slug = 'horno_y_gratinados' WHERE id = 12;
-UPDATE dish_types SET slug = 'salsas_y_acompanamientos' WHERE id = 13;
-UPDATE dish_types SET slug = 'bocadillos_y_sandwiches' WHERE id = 14;
-UPDATE dish_types SET slug = 'pizzas_y_masas' WHERE id = 15;
-UPDATE dish_types SET slug = 'postres' WHERE id = 16;
-UPDATE dish_types SET slug = 'reposteria' WHERE id = 17;
-UPDATE dish_types SET slug = 'bebidas' WHERE id = 18;

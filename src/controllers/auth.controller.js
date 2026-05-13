@@ -95,7 +95,11 @@ export async function login(req, res) {
 
 // POST /auth/logout
 export async function logout(_req, res) {
-  res.clearCookie('token')
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  })
   return ok(res, { message: 'Sesión cerrada.' })
 }
 
