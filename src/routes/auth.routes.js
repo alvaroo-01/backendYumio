@@ -125,13 +125,13 @@ const registroRules = [
     .trim()
     .notEmpty().withMessage('El nombre es obligatorio.')
     .isLength({ min: 3, max: 100 }).withMessage('El nombre debe tener entre 3 y 100 caracteres.')
-    .matches(/^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/).withMessage('El nombre contiene caracteres no válidos.'),
+    .matches(/^[\p{L}\s'\-]+$/u).withMessage('El nombre contiene caracteres no válidos.'),
 
   body('email')
     .trim()
     .notEmpty().withMessage('El correo es obligatorio.')
     .isEmail().withMessage('Formato de correo no válido.')
-    .normalizeEmail(),
+    .normalizeEmail({ all_lowercase: true, gmail_remove_dots: false }),
 
   body('password')
     .isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres.'),
@@ -159,7 +159,7 @@ const registroRules = [
 ]
 
 const loginRules = [
-  body('email').trim().notEmpty().withMessage('El correo es obligatorio.').isEmail().withMessage('Formato no válido.').normalizeEmail(),
+  body('email').trim().notEmpty().withMessage('El correo es obligatorio.').isEmail().withMessage('Formato no válido.').normalizeEmail({ all_lowercase: true, gmail_remove_dots: false }),
   body('password').notEmpty().withMessage('La contraseña es obligatoria.'),
 ]
 
@@ -168,12 +168,12 @@ const actualizarRules = [
     .trim()
     .notEmpty().withMessage('El nombre es obligatorio.')
     .isLength({ min: 3, max: 100 }).withMessage('El nombre debe tener entre 3 y 100 caracteres.')
-    .matches(/^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/).withMessage('El nombre contiene caracteres no válidos.'),
+    .matches(/^[\p{L}\s'\-]+$/u).withMessage('El nombre contiene caracteres no válidos.'),
 
   body('email')
     .trim().notEmpty().withMessage('El correo es obligatorio.')
     .isEmail().withMessage('Formato de correo no válido.')
-    .normalizeEmail(),
+    .normalizeEmail({ all_lowercase: true, gmail_remove_dots: false }),
 
   body('password')
     .optional({ checkFalsy: true })
