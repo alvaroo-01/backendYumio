@@ -17,8 +17,11 @@ import {
   markShareAsRead,
   getUnreadShareCount,
   deleteReceivedShare,
+  getReceivedShareById,
 } from '../models/friendship.model.js'
 import { findUserByUsername, findUserById } from '../models/user.model.js'
+import { createRecipe, getRecipeById, getRecipeWithRelations } from '../models/recipe.model.js'
+import { nameToSlug } from '../models/catalog.model.js'
 import { ok, created, noContent, badRequest, forbidden, notFound, conflict, serverError } from '../utils/response.js'
 
 // GET /friends
@@ -340,6 +343,52 @@ export async function deleteReceived(req, res) {
     return noContent(res)
   } catch (err) {
     console.error('[friends.deleteReceived]', err)
+    return serverError(res)
+  }
+}
+
+// POST /friends/shared-recipes/:shareId/save
+// Guarda la receta compartida como propia y elimina el share
+export async function saveReceived(req, res) {
+  try {
+    const shareId = Number(req.params.shareId)
+    if (!Number.isInteger(shareId) || shareId <= 0) return badRequest(res, 'ID no válido.')
+
+    const share = await getReceivedShareById(shareId, req.user.id)
+    if (!share) return notFound(res, 'Receta compartida no encontrada.')
+
+    const recipeData = await getRecipeWithRelations(share.recipe_id)
+    if (!recipeData) return notFound(res, 'Receta original no encontrada.')
+
+    const source = recipeData.recipe
+    const data = {
+      name:         source.name,
+      description:  source.description ?? null,
+      servings:     source.servings,
+      totalMinutes: source.prep_time_total_minutes,
+      prepMinutes:  source.prep_time_active_minutes,
+      cookMinutes:  source.prep_time_passive_minutes,
+      countryId:    source.country_id,
+      dishType:     source.dish_type_id,
+      dietType:     source.is_vegan ? 'vegano' : source.is_vegetarian ? 'vegetariano' : 'normal',
+      observations: source.observations ?? null,
+      isPublic:     Boolean(source.is_public),
+      ingredients:  recipeData.ingredients.map((ing) => ({
+        ingredient_text: ing.ingredient_text,
+        quantity:        ing.quantity,
+        unit:            ing.unit,
+      })),
+      steps:         recipeData.steps.map((step) => step.description),
+      allergens:     recipeData.allergens.map((a) => nameToSlug(a.allergen_name)),
+    }
+
+    const recipeId = await createRecipe(req.user.id, data, source.photo)
+    await deleteReceivedShare(shareId, req.user.id)
+
+    const recipe = await getRecipeById(recipeId, req.user.id)
+    return created(res, { message: 'Receta guardada como propia.', recipe, shareId })
+  } catch (err) {
+    console.error('[friends.saveReceived]', err)
     return serverError(res)
   }
 }

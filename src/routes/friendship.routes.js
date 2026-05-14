@@ -3,7 +3,7 @@ import { body, param, query } from 'express-validator'
 import {
   list, pending, blocked, search, request, accept, block, unblock, remove,
   shareRecipeWithOne, shareRecipeWithAll,
-  getReceived, getSent, markRead, deleteReceived, unreadCount,
+  getReceived, getSent, markRead, deleteReceived, saveReceived, unreadCount,
 } from '../controllers/friendship.controller.js'
 import { requireAuth } from '../middlewares/auth.middleware.js'
 import { validate } from '../middlewares/validate.middleware.js'
@@ -41,6 +41,13 @@ router.patch(
   param('shareId').isInt({ min: 1 }).withMessage('ID de share no válido.'),
   validate,
   markRead,
+)
+
+router.post(
+  '/shared-recipes/:shareId/save',
+  param('shareId').isInt({ min: 1 }).withMessage('ID de share no válido.'),
+  validate,
+  saveReceived,
 )
 
 router.delete(

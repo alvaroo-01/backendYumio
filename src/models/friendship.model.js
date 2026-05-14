@@ -170,6 +170,17 @@ export async function deleteReceivedShare(shareId, recipientId) {
   return result.affectedRows
 }
 
+export async function getReceivedShareById(shareId, recipientId) {
+  const [rows] = await pool.query(
+    `SELECT id, recipe_id
+     FROM friend_recipe_shares
+     WHERE id = ? AND recipient_id = ?
+     LIMIT 1`,
+    [shareId, recipientId],
+  )
+  return rows[0] ?? null
+}
+
 /**
  * Envía una receta a TODOS los amigos aceptados del remitente.
  * Devuelve el número de envíos realizados.

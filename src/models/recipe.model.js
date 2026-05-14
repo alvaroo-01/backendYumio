@@ -132,6 +132,38 @@ export async function getRecipeById(recipeId, requestingUserId) {
   return serializeRecipeDetail(base, recipe, ingredients, steps, allergens)
 }
 
+export async function getRecipeWithRelations(recipeId) {
+  const [rows] = await pool.query('SELECT * FROM recipes WHERE id = ? LIMIT 1', [recipeId])
+  const recipe = rows[0]
+  if (!recipe) return null
+
+  const [ingredients] = await pool.query(
+    `SELECT ingredient_text, quantity, unit, order_index
+     FROM recipe_ingredients
+     WHERE recipe_id = ?
+     ORDER BY order_index ASC`,
+    [recipeId],
+  )
+
+  const [steps] = await pool.query(
+    `SELECT description
+     FROM recipe_steps
+     WHERE recipe_id = ?
+     ORDER BY step_number ASC`,
+    [recipeId],
+  )
+
+  const [allergens] = await pool.query(
+    `SELECT a.name AS allergen_name
+     FROM recipe_allergens ra
+     JOIN allergens a ON a.id = ra.allergen_id
+     WHERE ra.recipe_id = ?`,
+    [recipeId],
+  )
+
+  return { recipe, ingredients, steps, allergens }
+}
+
 export function serializeRecipeDetail(base, recipe, ingredients, steps, allergens) {
   return {
     ...base,
