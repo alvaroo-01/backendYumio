@@ -9,12 +9,14 @@ import {
   getBlockedUsers,
   searchUsersForFriendship,
   deleteFriendship,
+  getRecipeShare,
   shareRecipeWithFriend,
   shareRecipeWithAllFriends,
   getReceivedShares,
   getSentShares,
   markShareAsRead,
   getUnreadShareCount,
+  deleteReceivedShare,
 } from '../models/friendship.model.js'
 import { findUserByUsername, findUserById } from '../models/user.model.js'
 import { ok, created, noContent, badRequest, forbidden, notFound, conflict, serverError } from '../utils/response.js'
@@ -188,6 +190,11 @@ export async function shareRecipeWithOne(req, res) {
       return forbidden(res, 'No puedes compartir una receta privada que no es tuya.')
     }
 
+    const existingShare = await getRecipeShare(req.user.id, friendId, recipeId)
+    if (existingShare) {
+      return conflict(res, 'Ya has compartido esta receta con este amigo.')
+    }
+
     const shareId = await shareRecipeWithFriend(req.user.id, friendId, recipeId, message)
     return created(res, {
       message: 'Receta compartida correctamente.',
@@ -316,6 +323,23 @@ export async function markRead(req, res) {
     return ok(res, { message: 'Marcado como leído.' })
   } catch (err) {
     console.error('[friends.markRead]', err)
+    return serverError(res)
+  }
+}
+
+// DELETE /friends/shared-recipes/:shareId
+// Elimina un share recibido para que ya no aparezca en pendientes
+export async function deleteReceived(req, res) {
+  try {
+    const shareId = Number(req.params.shareId)
+    if (!Number.isInteger(shareId) || shareId <= 0) return badRequest(res, 'ID no válido.')
+
+    const deleted = await deleteReceivedShare(shareId, req.user.id)
+    if (!deleted) return notFound(res, 'Share no encontrado.')
+
+    return noContent(res)
+  } catch (err) {
+    console.error('[friends.deleteReceived]', err)
     return serverError(res)
   }
 }

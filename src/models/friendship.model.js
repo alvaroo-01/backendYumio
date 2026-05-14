@@ -141,6 +141,17 @@ export async function deleteFriendship(id) {
  * Envía una receta a un amigo concreto.
  * Devuelve el ID del share creado.
  */
+export async function getRecipeShare(senderId, recipientId, recipeId) {
+  const [rows] = await pool.query(
+    `SELECT id
+     FROM friend_recipe_shares
+     WHERE sender_id = ? AND recipient_id = ? AND recipe_id = ?
+     LIMIT 1`,
+    [senderId, recipientId, recipeId],
+  )
+  return rows[0] ?? null
+}
+
 export async function shareRecipeWithFriend(senderId, recipientId, recipeId, message) {
   const [result] = await pool.query(
     `INSERT INTO friend_recipe_shares (sender_id, recipient_id, recipe_id, message)
@@ -148,6 +159,15 @@ export async function shareRecipeWithFriend(senderId, recipientId, recipeId, mes
     [senderId, recipientId, recipeId, message ?? null],
   )
   return result.insertId
+}
+
+export async function deleteReceivedShare(shareId, recipientId) {
+  const [result] = await pool.query(
+    `DELETE FROM friend_recipe_shares
+     WHERE id = ? AND recipient_id = ?`,
+    [shareId, recipientId],
+  )
+  return result.affectedRows
 }
 
 /**
@@ -170,13 +190,25 @@ export async function shareRecipeWithAllFriends(senderId, recipeId, message) {
 
   if (friends.length === 0) return 0
 
-  const values = friends.map((f) => [senderId, f.friend_id, recipeId, message ?? null])
+  const friendIds = friends.map((f) => f.friend_id)
+  const [existingShares] = await pool.query(
+    `SELECT recipient_id
+     FROM friend_recipe_shares
+     WHERE sender_id = ? AND recipe_id = ? AND recipient_id IN (?)`,
+    [senderId, recipeId, friendIds],
+  )
+
+  const existingRecipientIds = new Set(existingShares.map((row) => row.recipient_id))
+  const recipientsToShare = friends.filter((f) => !existingRecipientIds.has(f.friend_id))
+  if (recipientsToShare.length === 0) return 0
+
+  const values = recipientsToShare.map((f) => [senderId, f.friend_id, recipeId, message ?? null])
   await pool.query(
     `INSERT INTO friend_recipe_shares (sender_id, recipient_id, recipe_id, message)
      VALUES ?`,
     [values],
   )
-  return friends.length
+  return recipientsToShare.length
 }
 
 /**
