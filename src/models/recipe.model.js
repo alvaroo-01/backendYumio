@@ -85,8 +85,9 @@ export async function getRecipes({ userId, page = 1, limit = 6, search = '', fil
 // ─── Detalle de receta ───────────────────────────────────────────────────────
 
 export async function getRecipeById(recipeId, requestingUserId) {
-  // Si no hay usuario autenticado usamos NULL para el JOIN de favoritos
-  const favUserId = requestingUserId ?? null
+  // Solo se permite consultar recetas del propietario autenticado.
+  if (!requestingUserId) return null
+
   const [rows] = await pool.query(
     `SELECT
        r.*,
@@ -99,8 +100,9 @@ export async function getRecipeById(recipeId, requestingUserId) {
      LEFT JOIN paises p            ON p.id  = r.country_id
      LEFT JOIN users u             ON u.id  = r.user_id
      LEFT JOIN favorite_recipes fr ON fr.recipe_id = r.id AND fr.user_id = ?
-     WHERE r.id = ? LIMIT 1`,
-    [favUserId, recipeId],
+     WHERE r.id = ? AND r.user_id = ?
+     LIMIT 1`,
+    [requestingUserId, recipeId, requestingUserId],
   )
   if (!rows[0]) return null
 

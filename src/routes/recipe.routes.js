@@ -2,14 +2,13 @@ import { Router } from 'express'
 import { body, param } from 'express-validator'
 import { list, detail, create, update, remove, favorite, unfavorite } from '../controllers/recipe.controller.js'
 import { addToShoppingList } from '../controllers/shoppingList.controller.js'
-import { requireAuth, optionalAuth } from '../middlewares/auth.middleware.js'
+import { requireAuth } from '../middlewares/auth.middleware.js'
 import { validate } from '../middlewares/validate.middleware.js'
 import { upload } from '../config/multer.js'
 
 const router = Router()
 
-// GET /recipes y GET /recipes/:id son públicos (usuarios no autenticados ven recetas públicas)
-// El resto de operaciones requieren autenticación
+// Todas las operaciones de recetas requieren autenticación.
 const VALID_DIET_TYPES = ['normal', 'omnivoro', 'vegetariano', 'vegano']
 
 const recipeRules = [
@@ -47,7 +46,7 @@ const recipeRules = [
 const idParam = param('id').isInt({ min: 1 }).withMessage('ID de receta no válido.')
 
 router.get('/',    requireAuth, list)
-router.get('/:id', optionalAuth, [idParam], validate, detail)
+router.get('/:id', requireAuth, [idParam], validate, detail)
 
 // POST y PUT admiten imagen opcional
 router.post('/',     requireAuth, upload.single('photo'), recipeRules, validate, create)

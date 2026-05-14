@@ -30,17 +30,12 @@ export async function list(req, res) {
   }
 }
 
-// GET /recipes/:id  (público — req.user puede ser null)
+// GET /recipes/:id  (solo propietario autenticado)
 export async function detail(req, res) {
   try {
-    const userId = req.user?.id ? Number(req.user.id) : null
+    const userId = Number(req.user.id)
     const recipe = await getRecipeById(Number(req.params.id), userId)
     if (!recipe) return notFound(res, 'Receta no encontrada.')
-
-    // Recetas privadas solo visibles por su autor
-    if (!recipe.is_public && recipe.authorId !== userId) {
-      return forbidden(res)
-    }
 
     // Calcular avisos de incompatibilidad con las preferencias del usuario
     // warnings: lista de alérgenos de la receta que coinciden con los del usuario
