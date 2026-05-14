@@ -7,6 +7,7 @@ import {
   getBlockedUsers,
   searchUsersForFriendship,
   deleteFriendship,
+  getFriendshipById,
   shareRecipeWithFriend,
   shareRecipeWithAllFriends,
   getReceivedShares,
@@ -139,11 +140,6 @@ export async function remove(req, res) {
   }
 }
 
-
-async function getFriendshipById(id) {
-  const [rows] = await pool.query('SELECT * FROM user_friendships WHERE id = ? LIMIT 1', [id])
-  return rows[0] ?? null
-}
 
 // ─── Compartir recetas entre amigos ──────────────────────────────────────────
 
