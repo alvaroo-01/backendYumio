@@ -29,7 +29,7 @@ function getRetryAfterSeconds(req) {
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 40,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
@@ -47,7 +47,7 @@ const loginLimiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 40,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
