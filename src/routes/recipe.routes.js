@@ -30,6 +30,14 @@ const recipeRules = [
     .isInt({ min: 1 }).withMessage('Las raciones deben ser un número positivo.'),
 
   // tipo_plato no se valida contra lista porque se resuelve con lookup en BD
+  body()
+    .custom((body) => {
+      if (!body.tipo_plato && !body.dishType) {
+        throw new Error('tipo de plato no puede ser nulo')
+      }
+      return true
+    }),
+
   body(['tipo_plato', 'dishType'])
     .optional({ nullable: true, checkFalsy: true })
     .isString(),
