@@ -33,7 +33,7 @@ const recipeRules = [
   body()
     .custom((body) => {
       if (!body.tipo_plato && !body.dishType) {
-        throw new Error('tipo de plato no puede ser nulo')
+        throw new Error('Tipo de plato no puede ser nulo')
       }
       return true
     }),
